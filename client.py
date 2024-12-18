@@ -1,33 +1,65 @@
 import socket
+import argparse
 
 class PaxosClient:
     def __init__(self, server_ip, port=5555):
         self.server_ip = server_ip
         self.port = port
+        self.client_socket = None
+
+    def connect_to_server(self):
+        """Establish a connection to the server."""
+        try:
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((self.server_ip, self.port))
+            print(f"[INFO] Connected to server {self.server_ip}:{self.port}")
+        except Exception as e:
+            print(f"[ERROR] Unable to connect to server: {e}")
+
+    def close_connection(self):
+        """Gracefully close the connection."""
+        if self.client_socket:
+            self.client_socket.close()
+            print("[INFO] Disconnected from server.")
 
     def send_request(self, request):
+        """Send a request to the server and handle the response."""
         try:
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.connect((self.server_ip, self.port))
+            if not self.client_socket:
+                print("[ERROR] Not connected to the server. Please connect first.")
+                return
 
             # Send request
-            client_socket.send(request.encode('utf-8'))
+            self.client_socket.send(request.encode('utf-8'))
 
             # Receive response
-            response = client_socket.recv(4096).decode('utf-8')
+            response = self.client_socket.recv(4096).decode('utf-8')
             print(f"[RESPONSE] {response}")
 
-            client_socket.close()
         except Exception as e:
             print(f"[ERROR] {e}")
+            self.close_connection()  # Disconnect on error
+
+    def reconnect(self):
+        """Attempt to reconnect to the server if disconnected."""
+        if self.client_socket:
+            print("[INFO] Reconnecting...")
+            self.close_connection()
+        self.connect_to_server()
 
 def main():
-    print("Welcome to the Paxos Client!")
-    server_ip = input("Enter the Paxos server IP (or press Enter for local): ").strip()
-    if not server_ip:
-        server_ip = socket.gethostbyname(socket.gethostname())  # Auto-detect local IP
+    # Set up argument parsing
+    parser = argparse.ArgumentParser(description="Paxos Client to interact with Paxos Server.")
+    parser.add_argument("server_ip", help="The IP address of the Paxos server.")
+    parser.add_argument("port", type=int, default=5555, nargs="?", help="The port of the Paxos server (default is 5555).")
 
-    client = PaxosClient(server_ip, port=5555)
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    client = PaxosClient(args.server_ip, args.port)
+
+    # Connect to the server
+    client.connect_to_server()
 
     while True:
         print("\nOptions:")
@@ -47,9 +79,10 @@ def main():
             client.send_request("clients")
         elif choice == "4":
             print("Exiting client.")
+            client.close_connection()  # Close the connection on exit
             break
         else:
-            print("Invalid choice. Try again.")
+            print("Invalid choice. Please try again.")
 
 if __name__ == "__main__":
     main()
