@@ -1,5 +1,5 @@
-import threading
 import socket
+import threading
 import random
 import json
 
@@ -10,29 +10,34 @@ class Acceptor:
         self.accepted_value = None
 
     def prepare(self, proposal_number):
+        """Phase 1: Prepare"""
+        print(f"[PREPARE] {self.client_address}: Received proposal number {proposal_number}. Current highest proposal: {self.highest_proposal_number}")
         if proposal_number > self.highest_proposal_number:
             self.highest_proposal_number = proposal_number
             return True  # Promise to accept
         return False
 
     def accept(self, proposal_number, proposal_value):
+        """Phase 2: Accept"""
+        print(f"[ACCEPT] {self.client_address}: Received proposal number {proposal_number} with value '{proposal_value}'.")
         if proposal_number >= self.highest_proposal_number:
             self.highest_proposal_number = proposal_number
             self.accepted_value = proposal_value
+            print(f"[ACCEPTED] {self.client_address}: Value '{proposal_value}' accepted.")
             return proposal_value
         return None
 
 
 class PaxosServer:
     def __init__(self, port=5555):
-        self.host = "0.0.0.0"  # Bind to all available interfaces
+        self.host = '10.0.2.15'  # Get the local machine's IP
         self.port = port
         self.acceptors = {}  # Connected clients dynamically registered
         self.lock = threading.Lock()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
-        print(f"[SERVER] Paxos Server running on {socket.gethostbyname(socket.gethostname())}:{self.port}")
+        print(f"[SERVER] Paxos Server running on {self.host}:{self.port}")
 
     def broadcast_status(self):
         """Show the current state of all acceptors."""
@@ -66,6 +71,9 @@ class PaxosServer:
                 elif request.lower() == "clients":
                     clients = self.list_clients()
                     client_socket.send(f"Connected clients:\n{clients}".encode('utf-8'))
+                elif request.lower() == "exit":
+                    print(f"[DISCONNECT] Client {client_address} requested exit.")
+                    break  # Exit the loop if the client sends an exit command
                 else:
                     # Start Paxos Proposal
                     proposal_number = random.randint(1, 1000)
@@ -115,5 +123,5 @@ class PaxosServer:
 
 
 if __name__ == "__main__":
-    server = PaxosServer(port=5555)  # Fixed port 5555
+    server = PaxosServer(port=5555)
     server.start()
