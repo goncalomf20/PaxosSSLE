@@ -1,88 +1,80 @@
-import socket
-import argparse
+import requests
+import threading
+import time
 
-class PaxosClient:
-    def __init__(self, server_ip, port=5555):
-        self.server_ip = server_ip
-        self.port = port
-        self.client_socket = None
+def connect_to_api(api_url, ip_address):
+    try:
+        response = requests.post(f"{api_url}/register", json={"ip": ip_address})
+        if response.status_code == 201:
+            data = response.json()
+            print(f"Connected to API. Node ID: {data['nID']}, IP: {data['ip']}")
+            print("Registered Nodes:")
+            for node_id, ip in data['nodes'].items():
+                print(f"  Node {node_id}: {ip}")
+            return data['nID']
+        else:
+            print(f"Failed to register: {response.json().get('error', 'Unknown error')}")
+    except requests.RequestException as e:
+        print(f"Error connecting to API: {e}")
+    return None
 
-    def connect_to_server(self):
-        """Establish a connection to the server."""
-        try:
-            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client_socket.connect((self.server_ip, self.port))
-            print(f"[INFO] Connected to server {self.server_ip}:{self.port}")
-        except Exception as e:
-            print(f"[ERROR] Unable to connect to server: {e}")
-
-    def close_connection(self):
-        """Gracefully close the connection."""
-        if self.client_socket:
-            self.client_socket.close()
-            print("[INFO] Disconnected from server.")
-
-    def send_request(self, request):
-        """Send a request to the server and handle the response."""
-        try:
-            if not self.client_socket:
-                print("[ERROR] Not connected to the server. Please connect first.")
-                return
-
-            # Send request
-            self.client_socket.send(request.encode('utf-8'))
-
-            # Receive response
-            response = self.client_socket.recv(4096).decode('utf-8')
-            print(f"[RESPONSE] {response}")
-
-        except Exception as e:
-            print(f"[ERROR] {e}")
-            self.close_connection()  # Disconnect on error
-
-    def reconnect(self):
-        """Attempt to reconnect to the server if disconnected."""
-        if self.client_socket:
-            print("[INFO] Reconnecting...")
-            self.close_connection()
-        self.connect_to_server()
-
-def main():
-    # Set up argument parsing
-    parser = argparse.ArgumentParser(description="Paxos Client to interact with Paxos Server.")
-    parser.add_argument("server_ip", help="The IP address of the Paxos server.")
-    parser.add_argument("port", type=int, default=5555, nargs="?", help="The port of the Paxos server (default is 5555).")
-
-    # Parse the command line arguments
-    args = parser.parse_args()
-
-    client = PaxosClient(args.server_ip, args.port)
-
-    # Connect to the server
-    client.connect_to_server()
-
+def menu(node_id, api_url):
     while True:
-        print("\nOptions:")
-        print("1. Propose a value")
-        print("2. Check status of acceptors")
-        print("3. List all connected clients")
-        print("4. Exit")
-
+        print("\n--- Node Menu ---")
+        print("1. See Registered Nodes")
+        print("2. Wait for Proposed Value Notification")
+        print("3. Exit")
+        
         choice = input("Enter your choice: ")
-
+        
         if choice == "1":
-            value = input("Enter value to propose: ")
-            client.send_request(value)
+            try:
+                response = requests.get(f"{api_url}/nodes")
+                if response.status_code == 200:
+                    nodes = response.json()
+                    print("\nRegistered Nodes:")
+                    for node_id, ip in nodes.items():
+                        print(f"  Node {node_id}: {ip}")
+                else:
+                    print("Failed to retrieve nodes.")
+            except requests.RequestException as e:
+                print(f"Error fetching nodes: {e}")
+
         elif choice == "2":
-            client.send_request("status")
+            print("Waiting for proposed value notification...")
+            listen_for_notifications(node_id, api_url)
+
         elif choice == "3":
-            client.send_request("clients")
-        elif choice == "4":
-            print("Exiting client.")
-            client.close_connection()  # Close the connection on exit
+            print("Exiting menu.")
             break
+
         else:
             print("Invalid choice. Please try again.")
 
+def listen_for_notifications(node_id, api_url):
+    # Simulated notification listener
+    def notification_listener():
+        while True:
+            try:
+                response = requests.get(f"{api_url}/notifications/{node_id}")
+                if response.status_code == 200:
+                    notification = response.json()
+                    if notification:
+                        print(f"\nNotification received: {notification['message']}")
+                        break
+                time.sleep(5)
+            except requests.RequestException as e:
+                print(f"Error listening for notifications: {e}")
+                break
+
+    listener_thread = threading.Thread(target=notification_listener, daemon=True)
+    listener_thread.start()
+    listener_thread.join()
+
 if __name__ == "__main__":
-    main()
+    api_url = input("Enter the API URL (e.g., http://localhost:5000): ")
+    ip_address = input("Enter your IP address: ")
+    
+    node_id = connect_to_api(api_url, ip_address)
+    if node_id:
+        menu(node_id, api_url)
