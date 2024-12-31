@@ -91,6 +91,10 @@ def save_reputation_scores():
     except Exception as e:
         print(f"Error saving reputation scores: {e}")
 
+def sum_words(words):
+    """Sum the selected words."""
+    return ''.join(words) 
+
 def adjust_reputation(node_ip, adjustment):
     """
     Adjust the reputation score of a node.
@@ -185,29 +189,6 @@ def notify_promise(nodes, round_id, own_ip):
         print(f"Error during promise notifications: {e}")
     return connections  # Return connections to be reused
 
-def connect_to_api(api_url, ip_address):
-    global last_call
-    try:
-        response = requests.post(f"{api_url}/register", json={"ip": ip_address})
-        if response.status_code == 201:
-            data = response.json()
-            print(f"Connected to API. Node ID: {data['nID']}, IP: {data['ip']}")
-            print("Registered Nodes:")
-            for node_id, ip in data['nodes'].items():
-                print(f"  Node {node_id}: {ip}")
-            save_last_call(ip_address, data['nodes'])
-
-            # Notify existing nodes about the new registration
-            notify_existing_nodes(ip_address, data['nID'], data['nodes'])
-
-            return data['nID'], data['nodes']
-        else:
-            print(f"Failed to register: {response.json().get('error', 'Unknown error')}")
-    except requests.RequestException as e:
-        print(f"Error connecting to API: {e}")
-        if last_call:
-            print(f"Last known state: Nodes={last_call['nodes']}, Timestamp={last_call['timestamp']}")
-    return None, None
 
 def start_socket_server():
     global server_running
@@ -504,6 +485,53 @@ def wait_for_notifications():
         print("\nCtrl+C detected. Stopping the server...")
         stop_socket_server()
 
+def connect_to_api(api_url, ip_address, username):
+    global last_call
+    try:
+        # Step 1: Register the node
+        response = requests.post(f"{api_url}/{username}", json={"ip": ip_address})
+        if response.status_code == 201:
+            data = response.json()
+            print(f"Selected indices: {data['selected_indices']}")
+
+            # Prompt user to input words for the selected indices
+            selected_indices = data['selected_indices']
+            words_list = []
+            for index in selected_indices:
+                word = input(f"Enter the word at index {index}: ").strip()
+                words_list.append(word)
+
+            # Step 2: Compute the sum of the words
+            summed_words = ''.join(words_list)  # Concatenate the words in order
+            print(f"Summed words: {summed_words}")
+
+            # Step 3: Verify the summed words
+            verify_response = requests.post(f"{api_url}/{username}/verify", json={"sum": summed_words, "ip": ip_address})
+            if verify_response.status_code == 201:
+                verify_data = verify_response.json()
+                print(f"Verification successful: {verify_data}")
+                PORT = verify_data['port']
+                print(f"Port changed to: {PORT}")
+                # Notify existing nodes about the new registration
+                save_last_call(ip_address, verify_data['nodes'])
+                notify_existing_nodes(ip_address, verify_data['nID'], verify_data['nodes'])
+
+                return verify_data['nID'], verify_data['nodes']
+            else:
+                print(f"Verification failed: {verify_response.json().get('error', 'Unknown error')}")
+        else:
+            print(f"Failed to register: {response.json().get('error', 'Unknown error')}")
+    except requests.RequestException as e:
+        print(f"Error connecting to API: {e}")
+        if last_call:
+            print(f"Last known state: Nodes={last_call['nodes']}, Timestamp={last_call['timestamp']}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        if last_call:
+            print(f"Last known state: Nodes={last_call['nodes']}, Timestamp={last_call['timestamp']}")
+
+    return None, None
+
 def menu(node_id, api_url, nodes):
     global last_decision
     own_ip = get_container_ip()
@@ -560,7 +588,8 @@ if __name__ == "__main__":
     api_url = input("Enter the API URL (e.g., http://localhost:5000): ")
     ip_address = get_container_ip()
     print(f"Detected container IP address: {ip_address}")
+    username = input("Enter Username (e.g., username):")
 
-    node_id, nodes = connect_to_api(api_url, ip_address)
+    node_id, nodes = connect_to_api(api_url, ip_address, username)
     if node_id and nodes:
         menu(node_id, api_url, nodes)
