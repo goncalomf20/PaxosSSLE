@@ -62,8 +62,7 @@ def send_passkey_socket(username, passkey, expiration_time):
             s.connect(("10.0.2.15", 23843))
             data = {
                 "username": username,
-                "passkey": passkey,
-                "expires_at": expiration_time.isoformat()
+                "passkey": passkey
             }
             s.sendall(json.dumps(data).encode('utf-8'))
     except Exception as e:
@@ -105,7 +104,7 @@ def scan_face(username):
     # return jsonify({"status": "error", "message": "Failed to capture image."}), 500
             passkey = generate_passkey()
             expiration_time = datetime.now() + timedelta(days=1)  # Set expiration time to 1 day from now
-            user_passkeys[username] = {"passkey": passkey, "expires_at": expiration_time}
+            user_passkeys[username] = {"passkey": passkey , "ip" : "10.0.2.15" , "port" : "5000"}
 
             # Send passkey over a socket
             threading.Thread(target=send_passkey_socket, args=(username, passkey, expiration_time)).start()
@@ -125,6 +124,5 @@ def show_passkey(username):
 camera = cv2.VideoCapture(0)
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
