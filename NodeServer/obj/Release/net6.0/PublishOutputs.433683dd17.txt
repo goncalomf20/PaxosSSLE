@@ -1,0 +1,5 @@
+/home/ssle/Desktop/NodeServer/build/NodeServer
+/home/ssle/Desktop/NodeServer/build/NodeServer.dll
+/home/ssle/Desktop/NodeServer/build/NodeServer.deps.json
+/home/ssle/Desktop/NodeServer/build/NodeServer.runtimeconfig.json
+/home/ssle/Desktop/NodeServer/build/NodeServer.pdb

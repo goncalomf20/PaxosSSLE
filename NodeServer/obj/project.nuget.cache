@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "Q3350XBDPjN2boOqgKQITxgjW0k5/HqpQ29uhdAmCS5bLwvUhqx8Z9Lc3IJ3W70sv97QVnpFfoGv7O2WkxOwHg==",
+  "success": true,
+  "projectFilePath": "/home/ssle/Desktop/NodeServer/NodeServer.csproj",
+  "expectedPackageFiles": [
+    "/home/ssle/.nuget/packages/microsoft.netcore.app.ref/6.0.8/microsoft.netcore.app.ref.6.0.8.nupkg.sha512",
+    "/home/ssle/.nuget/packages/microsoft.aspnetcore.app.ref/6.0.8/microsoft.aspnetcore.app.ref.6.0.8.nupkg.sha512",
+    "/home/ssle/.nuget/packages/microsoft.netcore.app.host.linux-x64/6.0.8/microsoft.netcore.app.host.linux-x64.6.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,15 @@
+/home/ssle/Desktop/NodeServer/bin/Debug/net6.0/NodeServer
+/home/ssle/Desktop/NodeServer/bin/Debug/net6.0/NodeServer.deps.json
+/home/ssle/Desktop/NodeServer/bin/Debug/net6.0/NodeServer.runtimeconfig.json
+/home/ssle/Desktop/NodeServer/bin/Debug/net6.0/NodeServer.dll
+/home/ssle/Desktop/NodeServer/bin/Debug/net6.0/NodeServer.pdb
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.csproj.AssemblyReference.cache
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.GeneratedMSBuildEditorConfig.editorconfig
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.AssemblyInfoInputs.cache
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.AssemblyInfo.cs
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.csproj.CoreCompileInputs.cache
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.dll
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/refint/NodeServer.dll
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.pdb
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/NodeServer.genruntimeconfig.cache
+/home/ssle/Desktop/NodeServer/obj/Debug/net6.0/ref/NodeServer.dll
